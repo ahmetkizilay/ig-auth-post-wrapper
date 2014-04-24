@@ -28,9 +28,15 @@
         };
 
         var post_req = https.request(post_options, function (res) {
+            var output = '';
             res.setEncoding('utf-8');
+            
             res.on('data', function (chunk) {
-                onsuccess(chunk);
+                output += chunk;
+            });
+
+            res.on('end', function() {
+                onsuccess(res.statusCode, output);
             });
         });
 
@@ -50,12 +56,20 @@
     });
 
     app.get('/step_two', function (req, res) {
-        var code = req.params.code;
+        var code = req.query.code;
+
+        if(code === undefined) {
+            res.status(400).send({msg: 'code param is not specified'});
+        }
+
         post_req_handler(code, function (statusCode, data) { // onsuccess
+
             res.status(statusCode).send(data);
 
         }, function (err) { // onfail
+
             res.status(500).send(err);
+
         });
     });
 
